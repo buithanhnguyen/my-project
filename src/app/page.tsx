@@ -1,101 +1,143 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+import { useState, FormEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import classNames from "classnames";
+
+export interface GitHubUser {
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  name?: string;
+  bio?: string;
+  public_repos: number;
+  followers: number;
+  following: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [input, setInput] = useState("");
+  const [user, setUser] = useState<GitHubUser | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSearch = async () => {
+    if (!input) {
+      setError("Please enter a GitHub username.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setUser(null);
+
+    try {
+      const response = await fetch(`https://api.github.com/users/${input}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("User not found.");
+        } else {
+          throw new Error("An error occurred while fetching the data.");
+        }
+      }
+      const data: GitHubUser = await response.json();
+      setUser(data);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    handleSearch();
+  };
+
+  return (
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center  p-8 pb-20 gap-16 sm:p-20">
+      <form className="flex w-full max-w-md gap-2" onSubmit={handleSubmit}>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Search GitHub User..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className={classNames(
+              "w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/5 border-gray-600",
+              {
+                "border-red-500": error,
+              }
+            )}
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="submit"
+          className={`px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          disabled={loading}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          {loading ? "Searching..." : "Search"}
+        </button>
+      </form>
+
+      {error && <div className="text-red-500">{error}</div>}
+
+      {user && (
+        <div
+          onClick={() => router.push(`/user/${user.login}`)}
+          className="cursor-pointer "
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <div className="max-w-md w-full bg-white/10 backdrop-blur-lg border border-gray-600 hover:border-blue-500 transition-all rounded-lg p-6 flex items-center gap-6 cursor-pointer hover:bg-white/20">
+            <Image
+              src={user.avatar_url}
+              alt={`${user.login} avatar`}
+              className="w-24 h-24 rounded-full"
+              width={96}
+              height={96}
+            />
+            <div>
+              <h2 className="text-xl font-semibold">
+                {user.name || user.login}
+              </h2>
+              <p className="text-gray-400">@{user.login}</p>
+              {user.bio && <p className="mt-2 text-sm">{user.bio}</p>}
+              <div className="mt-4 flex space-x-4 text-sm text-gray-300">
+                <div>Repos: {user.public_repos}</div>
+                <div>Followers: {user.followers}</div>
+                <div>Following: {user.following}</div>
+              </div>
+              <Link
+                href={user.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block text-blue-400 hover:underline text-sm"
+              >
+                View Profile on GitHub
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
