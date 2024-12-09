@@ -5,56 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import classNames from "classnames";
-
-export interface GitHubUser {
-  login: string;
-  avatar_url: string;
-  html_url: string;
-  name?: string;
-  bio?: string;
-  public_repos: number;
-  followers: number;
-  following: number;
-}
+import { useGitHub } from "@/app/hooks/useGitHub";
 
 export default function Home() {
   const [input, setInput] = useState("");
-  const [user, setUser] = useState<GitHubUser | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading, error, searchUser } = useGitHub();
   const router = useRouter();
-
-  const handleSearch = async () => {
-    if (!input) {
-      setError("Please enter a GitHub username.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setUser(null);
-
-    try {
-      const response = await fetch(`https://api.github.com/users/${input}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("User not found.");
-        } else {
-          throw new Error("An error occurred while fetching the data.");
-        }
-      }
-      const data: GitHubUser = await response.json();
-      setUser(data);
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    handleSearch();
+    searchUser(input);
   };
 
   return (

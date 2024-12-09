@@ -2,46 +2,17 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { GitHubUser } from "@/app/page";
+import { fetchUser, fetchRepos } from "@/app/api/github";
 
 import ArrowIcon from "@/share/icon/arrow";
 import StarIcon from "@/share/icon/star";
 import ForkIcon from "@/share/icon/fork";
 
-interface Repository {
-  id: number;
-  name: string;
-  html_url: string;
-  description: string;
-  stargazers_count: number;
-  forks_count: number;
-}
-
-async function fetchUser(username: string): Promise<GitHubUser> {
-  const res = await fetch(`https://api.github.com/users/${username}`, {
-    next: { revalidate: 60 },
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch user data.");
-  }
-
-  return res.json();
-}
-
-async function fetchRepos(username: string): Promise<Repository[]> {
-  const res = await fetch(`https://api.github.com/users/${username}/repos`, {
-    next: { revalidate: 60 },
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch repositories.");
-  }
-
-  return res.json();
-}
-
-const UserDetail = async ({ params }: { params: Promise<{ username: string }> }) => {
+const UserDetail = async ({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) => {
   const { username } = await params;
 
   try {
